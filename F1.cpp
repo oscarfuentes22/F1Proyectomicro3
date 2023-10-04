@@ -76,7 +76,10 @@ void* Race(void *car){
             viewCar -> lapsBeforePitstop = viewCar->tireType == 0 ? 7 : (viewCar->tireType == 1 ? 11 : 14);
             viewCar->currentSpeed = viewCar->originalSpeed * (viewCar->tireType == 0 ? 1.5 : (viewCar->tireType == 1 ? 1 : 0.8));
         }
-        
+        // Simulte pitstop time penalty
+        float pitstopTime = (randomNumber(5, 16) / 3600.0);
+        viewCar->totalTime += pitstopTime;
+
         // Simulate lap time
         viewCar->lapTime = 4.7 / viewCar->currentSpeed;
         viewCar->totalTime += viewCar->lapTime;
@@ -111,7 +114,7 @@ void displayFinalPositions(Car cars[]) {
     
     cout << "\nFinal positions:" << endl;
     for (int i = 0; i < 8; i++) {
-        cout << i + 1 << ". " << cars[i].carName << ", Total Time: " << cars[i].totalTime << endl;
+        cout << i + 1 << ". " << cars[i].carName << ", Total Time: " << cars[i].totalTime * 3600 << " seconds" << endl;
     }
 }
 
