@@ -82,7 +82,9 @@ void* Race(void *car){
         viewCar->totalTime += viewCar->lapTime;
         viewCar -> lapCount++;
 
+        pthread_mutex_lock(&console_mutex);
         cout << viewCar->carName << ", Lap: " << viewCar -> lapCount << ", Lap Time: " << viewCar->lapTime << endl;
+        pthread_mutex_unlock(&console_mutex);
     }
 }
 
