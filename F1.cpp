@@ -12,6 +12,7 @@
 using namespace std;
 
 pthread_mutex_t console_mutex;
+pthread_barrier_t lap_barrier;
 
 struct Car {
     pthread_t thread;
@@ -49,10 +50,10 @@ int getTireTypeFromUser() {
 void* Race(void *car){
     Car * viewCar;
     viewCar = (Car *)car;
+    float pitstopTime = 0.0;
 
-    while (viewCar-> lapCount <= 21) {      
-        // Decrement laps before pitstop and check if pitstop is required
-        viewCar -> lapsBeforePitstop--;
+    while (viewCar-> lapCount < 21) {      
+        
 
         // Simulate pitstop
         if (viewCar -> lapsBeforePitstop == 0)
@@ -64,6 +65,8 @@ void* Race(void *car){
                 pthread_mutex_lock(&console_mutex);
                 // Request tire type from user
                 viewCar->tireType = getTireTypeFromUser();
+                pitstopTime = (randomNumber(5, 16) / 3600.0);
+                cout << viewCar->carName << " had a pitstop of " << pitstopTime * 3600 << " seconds, at Lap: " << viewCar -> lapCount << endl;  // Print pitstop time
                 // Unlock to allow other cars to proceed
                 pthread_mutex_unlock(&console_mutex);
             }
@@ -71,23 +74,36 @@ void* Race(void *car){
             else
             {
                 viewCar -> tireType = randomNumber(0, 2);
+                pitstopTime = (randomNumber(5, 16) / 3600.0);
+                pthread_mutex_lock(&console_mutex);
+                cout << viewCar->carName << " had a pitstop of " << pitstopTime * 3600 << " seconds, at Lap: " << viewCar -> lapCount << endl;  // Print pitstop time
+                pthread_mutex_unlock(&console_mutex);
             }
 
             viewCar -> lapsBeforePitstop = viewCar->tireType == 0 ? 7 : (viewCar->tireType == 1 ? 11 : 14);
             viewCar->currentSpeed = viewCar->originalSpeed * (viewCar->tireType == 0 ? 1.5 : (viewCar->tireType == 1 ? 1 : 0.8));
         }
         // Simulte pitstop time penalty
-        float pitstopTime = (randomNumber(5, 16) / 3600.0);
+        
         viewCar->totalTime += pitstopTime;
 
         // Simulate lap time
         viewCar->lapTime = 4.7 / viewCar->currentSpeed;
         viewCar->totalTime += viewCar->lapTime;
         viewCar -> lapCount++;
+        pthread_barrier_wait(&lap_barrier);
+        
+        // Introduce delay using Car Player as the "master" thread
+        if (viewCar->carName == "Car Player") {
+            sleep(1);  // Delay of 1 second
+        }
 
         pthread_mutex_lock(&console_mutex);
-        cout << viewCar->carName << ", Lap: " << viewCar -> lapCount << ", Lap Time: " << viewCar->lapTime << endl;
+        cout << viewCar->carName << ", Lap: " << viewCar -> lapCount << ", Lap Time: " << viewCar->lapTime * 3600 << " seconds" << endl;
         pthread_mutex_unlock(&console_mutex);
+
+        // Decrement laps before pitstop and check if pitstop is required
+        viewCar -> lapsBeforePitstop--;
     }
 }
 
@@ -125,8 +141,12 @@ int main(int argc, char const *argv[])
 
     //Initialize arrray cars
     Car cars[8];
+
     //Initialize mutex
     pthread_mutex_init(&console_mutex, NULL);
+
+    //Initialize barrier
+    pthread_barrier_init(&lap_barrier, NULL, 8);
 
     //Create Car
     for (int i = 0; i < 8; i++)
@@ -158,5 +178,7 @@ int main(int argc, char const *argv[])
 
     displayFinalPositions(cars);
     pthread_mutex_destroy(&console_mutex);
+    pthread_barrier_destroy(&lap_barrier);
+
     return 0;
 }
