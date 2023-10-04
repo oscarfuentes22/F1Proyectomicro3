@@ -10,6 +10,8 @@
 
 using namespace std;
 
+pthread_mutex_t console_mutex;
+
 struct Car {
     pthread_t thread;
     string carName;
@@ -27,10 +29,37 @@ int randomNumber(int minValue, int maxValue){
     return rand() % maxValue + minValue;
 }
 
+// F1 car race simulation
 void* Race(void *car){
     Car * viewCar;
     viewCar = (Car *)car;
-    cout << "Hola se creo el thread con el carro: " << viewCar -> carName << endl;
+    
+    int lapsCompleted = 0;
+
+    while (lapsCompleted < 21) {
+        // Decrement laps before pitstop and check if pitstop is required
+        viewCar -> lapsBeforePitstop--;
+        if (viewCar -> lapsBeforePitstop == 0) {
+            // Simulate pitstop
+            Sleep(5000);  // 5 seconds pitstop
+            viewCar -> tireType = randomNumber(0, 2);
+            viewCar -> lapsBeforePitstop = viewCar->tireType == 0 ? 7 : (viewCar->tireType == 1 ? 11 : 14);
+            viewCar -> currentSpeed = viewCar -> originalSpeed * (viewCar -> tireType == 0 ? 1.5 : (viewCar -> tireType == 1 ? 1 : 0.8));
+            viewCar -> lapTime = 4.7 / viewCar -> currentSpeed;
+            Sleep(1000);  // 1 second delay for tire change
+        }
+        
+        // Simulate lap time
+        Sleep(viewCar->lapTime * 100000);
+        viewCar->totalTime += viewCar->lapTime;
+        lapsCompleted++;
+        
+        // Print lap time protected with mutex
+        
+    pthread_mutex_lock(&console_mutex);
+    cout << viewCar->carName << ", Lap: " << lapsCompleted << ", Lap Time: " << viewCar->lapTime << endl;
+    pthread_mutex_unlock(&console_mutex);
+    }
 }
 
 
@@ -103,16 +132,6 @@ int main(int argc, char const *argv[])
         }
     }
     
-    
-    //Sort cars by Total Time
-    /*vector<Car> cars = inicializa tu vector de coches aquí;
-    
-    sort(cars.begin(), cars.end(), compareCars);
-
-    for (const auto& car : cars) {
-        std::cout << car.name << ", Total Time: " << car.totalTime << endl;
-    }*/
-
     return 0;
 }
 
