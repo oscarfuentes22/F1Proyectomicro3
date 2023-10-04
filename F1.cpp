@@ -33,18 +33,23 @@ int randomNumber(int minValue, int maxValue){
 // Obtener el tipo de llanta que el usuario desea usar en la pitstop
 int getTireTypeFromUser() {
     int userInput;
-    do {
+    while (true) {
         cout << "PITSTOP" << endl;
         cout << "Elige tipo de llanta (0: suave, 1: medio, 2: duro): " << endl;
         cin >> userInput;
-        cin.ignore(10000, '\n');
-        if (cin.fail() || userInput < 0 || userInput > 2) {
+
+        if (cin.good() && userInput >= 0 && userInput <= 2) {  // Verifica si la entrada es valida
+            cin.ignore(INT_MAX, '\n');  // Descarta cualquier entrada extra
+            return userInput;
+        } else {
             cout << "Entrada no valida. Ingresa un numero entre 0 y 2." << endl;
-            cin.clear(); // Limpiar el error
+            cin.clear();       // Limpiar el estado de fallo de cin
+            cin.ignore(INT_MAX, '\n');  // Descartar la entrada no deseada
         }
-    } while (userInput < 0 || userInput > 2);
-    return userInput;
+    }
 }
+
+
 
 // Simulacion de carrera de F1
 void* Race(void *car){
