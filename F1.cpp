@@ -7,10 +7,12 @@
 #include <windows.h>
 #include <cstdlib>
 #include <ctime>
+#include <algorithm>
 
 using namespace std;
 
 pthread_mutex_t console_mutex;
+pthread_barrier_t start_barrier;
 
 struct Car {
     pthread_t thread;
@@ -95,12 +97,23 @@ void createCar(void *car, string carnumber, bool userCar){
     newCar -> totalTime = 0.0;
 }
 
+void displayFinalPositions(Car cars[]) {
+    // Sort the cars based on totalTime
+    sort(cars, cars + 8, compareCars);
+    
+    cout << "\nFinal positions:" << endl;
+    for (int i = 0; i < 8; i++) {
+        cout << i + 1 << ". " << cars[i].carName << ", Total Time: " << cars[i].totalTime << endl;
+    }
+}
 
 int main(int argc, char const *argv[])
 {
     //Initialize seed
     srand(time(0));
-
+    
+    pthread_barrier_init(&start_barrier, NULL, 8);
+    
     //Initialize arrray cars
     Car cars[8];
 
@@ -132,7 +145,7 @@ int main(int argc, char const *argv[])
         }
     }
     
+    displayFinalPositions(cars);
+
     return 0;
 }
-
-
